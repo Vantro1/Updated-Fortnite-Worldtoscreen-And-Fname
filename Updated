@@ -1,0 +1,81 @@
+FName:
+
+ uint32_t ChunkOffset = (uint32_t)((int)(key) >> 16);
+    uint16_t NameOffset = (uint16_t)key;
+
+    uint64_t NamePoolChunk = read<uint64_t>(sdk::module_base + 0xDFE7980 + (8 * ChunkOffset) + 16) + (unsigned int)(4 * NameOffset);
+    uint16_t nameEntry = read<uint16_t>(NamePoolChunk);
+
+    int nameLength = nameEntry >> 6;
+    char buff[1024];
+    if ((uint32_t)nameLength)
+    {
+        for (int x = 0; x < nameLength; ++x)
+        {
+            buff[x] = read<char>(NamePoolChunk + 4 + x);
+        }
+
+        char* v2 = buff;
+        signed int v5 = nameLength;
+        uint64_t result;
+        uint64_t v6;
+        char v7;
+        unsigned int v8;
+
+        result = 22;
+
+        if (v5)
+        {
+            v6 = v5;
+            do
+            {
+                v7 = *v2++;
+                v8 = result + 45297;
+                *(v2 - 1) = v8 + ~v7;
+                result = (v8 << 8) | (v8 >> 8);
+                --v6;
+            } while (v6);
+        }
+
+    }
+    return 0;
+    
+    
+///////////////////////////////////////////////////////
+
+WorldToScreen:
+Camera:
+    Camera LocalCamera;
+    __int64 tmp = read<__int64>(read<__int64>(LocalPlayer + 0xd0) + 0x10);
+    LocalCamera.FieldOfView = 80.f / (read<double>(tmp + 0x680) / 1.19f);
+    LocalCamera.Rotation.x = read<double>(tmp + 0x7D0);
+    LocalCamera.Rotation.y = read<double>(LocalRoot + 0x148);
+    LocalCamera.Rotation.x = (asin(LocalCamera.Rotation.x)) * (180.0 / M_PI);
+    if (LocalCamera.Rotation.y < 0.0)
+        LocalCamera.Rotation.y += 360.0;
+    LocalCamera.Location = read<Vector3>(read<uint64_t>(World + 0x100));
+    return LocalCamera;
+
+
+    Worldtoscreen:
+        Camera vCamera = GetCamera(Rootcomp);
+    vCamera.Rotation.x = (asin(vCamera.Rotation.x)) * (180.0 / M_PI);
+ 
+    D3DMATRIX tempMatrix = Matrix(vCamera.Rotation);
+ 
+    Vector3 vAxisX = Vector3(tempMatrix.m[0][0], tempMatrix.m[0][1], tempMatrix.m[0][2]);
+    Vector3 vAxisY = Vector3(tempMatrix.m[1][0], tempMatrix.m[1][1], tempMatrix.m[1][2]);
+    Vector3 vAxisZ = Vector3(tempMatrix.m[2][0], tempMatrix.m[2][1], tempMatrix.m[2][2]);
+ 
+    Vector3 vDelta = WorldLocation - vCamera.Location;
+    Vector3 vTransformed = Vector3(vDelta.Dot(vAxisY), vDelta.Dot(vAxisZ), vDelta.Dot(vAxisX));
+ 
+    float ScreenCenterX = Width / 2;
+    float ScreenCenterY = Height / 2;
+    float ScreenCenterZ = Height / 2;
+ 
+    if (vTransformed.z < 1.f)
+        vTransformed.z = 1.f;
+ 
+    return Vector3((ScreenCenterX / 2.0f) + vTransformed.x * (((ScreenCenterX / 2.0f) / tanf(vCamera.FieldOfView * (float)M_PI / 360.f))) / vTransformed.z, (ScreenCenterY / 2.0f) - vTransformed.y * (((ScreenCenterY / 2.0f) / tanf(vCamera.FieldOfView * (float)M_PI / 360.f))) / vTransformed.z, 0);
+    
